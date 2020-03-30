@@ -1,5 +1,6 @@
 import sys
 import logging
+import datetime
 import pandas as pd
 from flask import Response, request, redirect, session
 from flask_migrate import Migrate
@@ -115,26 +116,28 @@ def create_app(config_name):
     )
     def update_leaderboard_graph(n_clicks, workout):
         if n_clicks > 0:
+            current_time = datetime.datetime.utcnow()
+            a_week_ago = current_time - datetime.timedelta(weeks=1)
+
             query = db.session.query(
                 WorkoutSession.user_name,
                 WorkoutSession.workout,
                 db.func.sum(WorkoutSession.reps).label("reps"),
-            )
+            ).filter(WorkoutSession.created_date >= a_week_ago)
+
             if workout is not None:
                 query = query.filter_by(workout=workout)
 
             query = (
                 query.group_by(WorkoutSession.user_name, WorkoutSession.workout)
                 .order_by(db.func.sum(WorkoutSession.reps).desc())
-                .limit(3)
                 .all()
             )
 
             df = pd.DataFrame(query, columns=["user_name", "workout", "reps"])
             layout = {
                 "barmode": "stack",
-                "margin": {"l": 0, "r": 0, "b": 0, "t": 10},
-                # "height": 180,
+                "margin": {"l": 0, "r": 0, "b": 0, "t": 40},
                 "autosize": True,
                 "font": {"family": "Comfortaa", "color": COLORS["text"], "size": 10,},
                 "plot_bgcolor": COLORS["graph_bg"],
@@ -154,6 +157,13 @@ def create_app(config_name):
                     "linewidth": 1,
                     "linecolor": "#282828",
                     "zeroline": False,
+                },
+                "title": {
+                    "text": "Last 7 Days",
+                    "y": 0.9,
+                    "x": 0.5,
+                    "xanchor": "center",
+                    "yanchor": "top",
                 },
                 "showlegend": False,
             }
