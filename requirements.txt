@@ -1,0 +1,13 @@
+numpy
+pandas
+picamera[array]
+Pillow
+opencv-python
+opencv-contrib-python
+Flask
+Flask-Caching
+Flask-Migrate
+Flask-SQLAlchemy
+plotly
+dash
+redis

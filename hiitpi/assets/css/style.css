@@ -1,0 +1,334 @@
+@font-face {
+  font-family: Comfortaa;
+  src: url("../font/Comfortaa/Comfortaa-Regular.ttf");
+}
+
+html,body {
+  font-family: "Comfortaa";
+  background-color: #1E1E1E;
+  color: #d8d8d8;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+.page-background-image {
+  width: 100%;
+  height: 100%;
+  background: #a7cece url("../img/pixels_art.jpg");
+  background-repeat: repeat;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: "Comfortaa";
+  font-weight: bold;
+}
+p {
+  font-family: "Comfortaa";
+  padding-left: 12px;
+  padding-right: 12px;
+  margin-top: 1rem;
+}
+a {
+  text-decoration: none;
+}
+
+.flex-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.center {
+  text-align: center;
+}
+
+img{
+  width: 100%;
+  height: auto;
+  display: inline-block;
+  object-fit: contain;
+}
+
+.app__config_panel {
+  display: inline-block;
+  padding: 10px;
+}
+
+.app__video_image {
+  margin: 0;
+  display: inline-block;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  height: auto;
+}
+
+.app__header {
+  display: block;
+  text-align: center;
+}
+
+.header_container {
+  margin: auto;
+  padding: 10% 10% 20% 10%;
+}
+
+.app__dropdown {
+  padding: 15px;
+}
+
+.app__container {
+  margin: 0 0 0 0;
+  width: 100%;
+}
+
+.pretty_container {
+  border-radius: 5px;
+  background-color: #1E1E1E;
+  margin: 0.5rem;
+  padding: 1rem;
+  position: relative;
+  border: 0.5px solid #4B4B4B
+}
+
+.indicator {
+  flex: 1;
+  padding: 0.75rem 1.75rem;
+  text-align: center;
+}
+
+.indicator_value {
+  color: #D3D3D3;
+  font-size: 3rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.indicator_text {
+  color: #A9A9A9;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.indicators {
+  padding: 0 15px 15px 15px;
+}
+
+#workout-dropdown {
+  width: 100%;
+  height: auto;
+  border-radius: 8px 0 0 8px; 
+}
+
+#workout-stop-btn {
+  font-family: "Comfortaa";
+  font-weight: bold;
+  color: #212121;
+  background-color: #fc6408;
+  border-radius: 0; 
+  border-color: #fc6408;
+  margin: 0;
+  width: 50%;
+}
+
+#user-logout-btn {
+  font-family: "Comfortaa";
+  font-weight: bold;
+  color: white;
+  background-color: royalblue;
+  border-radius: 0; 
+  border-color: royalblue;
+  margin: 0;
+  width: 50%;
+}
+
+#user-name-input {
+  font-family: "Comfortaa";
+  font-weight: bold;
+  color: white;
+  background-color: transparent;
+  border-radius: 8px 0 0 8px; 
+  border: none;
+}
+
+.form-inline {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+}
+
+.form-inline input {
+  font-family: "Comfortaa";
+  font-weight: bold;
+  font-size: 1rem;
+  vertical-align: middle;
+  padding: 10px;
+  background-color: lightgray;
+  border: none;
+  border-radius: 8px 0 0 8px; 
+  height: 38px;
+  outline: none;
+}
+
+.form-inline button {
+  font-family: "Comfortaa";
+  font-weight: bold;
+  font-size: 1rem;
+  background-color: royalblue;
+  border: none;
+  color: white;
+  height: 38px;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease 0s;
+  cursor: pointer;
+}
+
+.form-inline button:hover {
+  background-color: dodgerblue;
+  box-shadow: 0px 15px 20px rgba(46, 229, 157, 0.4);
+  color: #fff;
+  transform: translateY(-3px);
+}
+
+#user-login-btn {
+  font-family: "Comfortaa";
+  font-weight: bold;
+  color: white;
+  background-color: royalblue;
+  border-radius: 0 8px 8px 0; 
+  border: none;
+  margin: 0;
+  width: 100px;
+}
+
+#welcome-intro-md {
+  color: lightgray;
+  font-size: 1.5rem;
+}
+
+#welcome-intro-sub-md {
+  color: darkgray;
+  font-size: 0.5rem;
+}
+
+.welcome_login_form {
+	width: 100%;
+	height: 100%;
+	background-color: transparent;
+	position: absolute;
+	top:0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: auto;
+}
+
+#update-leaderboard-btn {
+  font-family: "Comfortaa";
+  font-weight: bold;
+  color: white;
+  background-color: #282828;
+  border-radius: 0; 
+  border-color: #282828;
+  margin: 0;
+  width: 100%;
+}
+
+#leaderboard-graph {
+  height: 150px;
+}
+
+.Select-control, .Select-menu-outer, .Select-multi-value-wrapper, .Select-input, .select-up, .is-open .Select-control {
+  background-color: #282828;
+  color: white;
+  border-color: #282828;
+  border-radius: 0; 
+  margin: 0;
+}
+
+.Select-control .Select-arrow-zone {
+  padding: 0;
+}
+
+.has-value.Select--single>.Select-control .Select-value .Select-value-label, .has-value.is-pseudo-focused.Select--single>.Select-control .Select-value .Select-value-label{
+  color: #d8d8d8;
+}
+
+.Select-input>input {
+  color: #d8d8d8;
+}
+
+hr { background-color: #404040; height: 1px; border: 0; margin: 15px}
+
+
+/* Hide scrollbar */
+.example::-webkit-scrollbar {
+  display: none;
+}
+.example {
+  -ms-overflow-style: none;
+}
+
+/* For Mobile Phones and small screens ––––––––––––––––––––––––––––––––––––––––––––––––––*/
+@media only screen and (max-width: 768px) {
+  .four, .eight {
+    min-width: 100%;
+ }
+  h1, h2, h3, p {
+    text-align: center;
+ }
+  body {
+    display: block;
+    margin: 0px;
+    overflow-y: scroll;
+  }
+  .app__content {
+    display: block;
+  }    
+  .app__container {
+    margin: 0 0 0 0;
+  }
+  .header_container {
+    margin: auto;
+    padding: 0 5% 20% 5%;
+  }
+  .app__video_image {
+    margin: 0 0 0 0;
+    padding: 0;
+    justify-content: center;
+    display: block;
+    max-width: 100%;
+    height: auto;
+ }
+} 
+
+/* width */
+::-webkit-scrollbar {
+  width: 10px !important;
+  display: block !important;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #1e1e1e !important; 
+  border-radius: 10px !important;
+  display: block !important;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: transparent; 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #d8d8d870 !important; 
+}
+
