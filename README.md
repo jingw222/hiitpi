@@ -1,6 +1,6 @@
 # HIIT PI
 
-HIIT PI is a [Dash](https://dash.plot.ly/) app that uses machine learning (specifically pose estiamtion) on edge devices to help track your [HIIT](https://en.wikipedia.org/wiki/High-intensity_interval_training) workout progress in real time (~30fps). The backend runs everything locally on a [Raspberry Pi](https://www.raspberrypi.org/) while you interact with the app wherever there is a web browser connecting to the same local network as the Pi does.
+HIIT PI is a [Dash](https://dash.plot.ly/) app that uses machine learning (specifically pose estimation) on edge devices to help track your [HIIT](https://en.wikipedia.org/wiki/High-intensity_interval_training) workout progress in real time (~30fps). The backend runs everything locally on a [Raspberry Pi](https://www.raspberrypi.org/) while you interact with the app wherever there is a web browser connecting to the same local network as the Pi does.
 
 ## Previews
 
