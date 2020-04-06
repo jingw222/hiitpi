@@ -158,7 +158,7 @@ class JumpingJacks(Workout):
     name = "Jumping Jacks"
 
     def __init__(self, *args, **kwargs):
-        super().__init__(n_keystates=3, *args, **kwargs)
+        super().__init__(n_keystates=2, *args, **kwargs)
         self.KEYPOINTS = [
             "left hip",
             "right hip",
@@ -198,22 +198,16 @@ class JumpingJacks(Workout):
         if stats is not None:
             if (
                 stats["e_ankles_norm"] <= stats["e_hips_norm"]
-                and stats["j_lshoulder_angle"] <= 20
-                and stats["j_rshoulder_angle"] <= 20
+                and stats["j_lshoulder_angle"] <= 30
+                and stats["j_rshoulder_angle"] <= 30
             ):
                 return 1
             elif (
-                stats["e_ankles_norm"] >= stats["e_hips_norm"]
-                and 70 <= stats["j_lshoulder_angle"] <= 110
-                and 70 <= stats["j_rshoulder_angle"] <= 110
+                stats["e_ankles_norm"] >= stats["e_hips_norm"] * 1.5
+                and stats["j_lshoulder_angle"] >= 110
+                and stats["j_rshoulder_angle"] >= 110
             ):
                 return 2
-            elif (
-                stats["e_ankles_norm"] >= stats["e_hips_norm"] * 2
-                and stats["j_lshoulder_angle"] >= 120
-                and stats["j_rshoulder_angle"] >= 120
-            ):
-                return 3
             else:
                 return 0
         else:
