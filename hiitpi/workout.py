@@ -275,4 +275,85 @@ class PushUp(Workout):
             return 0
 
 
-WORKOUTS = {"toe_tap": ToeTap, "jumping_jacks": JumpingJacks, "push_up": PushUp}
+class SideSquatJump(Workout):
+    name = "Side Squat Jump"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(n_keystates=3, *args, **kwargs)
+        self.KEYPOINTS = [
+            "left elbow",
+            "left shoulder",
+            "left wrist",
+            "right elbow",
+            "right shoulder",
+            "right wrist",
+            "left hip",
+            "right hip",
+            "left knee",
+            "right knee",
+            "left ankle",
+            "right ankle",
+        ]
+
+    def get_stats(self, pose):
+        kps = pose.keypoints
+
+        if all(kps[k].score > self.THRESHOLD for k in self.KEYPOINTS):
+
+            e_lelbow_lshoulder = Edge(kps["left elbow"], kps["left shoulder"])
+            e_lelbow_lwrist = Edge(kps["left elbow"], kps["left wrist"])
+            e_relbow_rshoulder = Edge(kps["right elbow"], kps["right shoulder"])
+            e_relbow_rwrist = Edge(kps["right elbow"], kps["right wrist"])
+
+            e_lshoulder_rshoulder = Edge(kps["left shoulder"], kps["right shoulder"])
+            e_lwrist_rwrist = Edge(kps["left wrist"], kps["right wrist"])
+
+            e_hips = Edge(kps["left hip"], kps["right hip"])
+            e_ankles = Edge(kps["left ankle"], kps["right ankle"])
+
+            j_lelbow = Joint(e_lelbow_lshoulder, e_lelbow_lwrist)
+            j_relbow = Joint(e_relbow_rshoulder, e_relbow_rwrist)
+
+            return {
+                "e_shoulders_norm": e_lshoulder_rshoulder.norm,
+                "e_wrists_norm": e_lwrist_rwrist.norm,
+                "e_hips_norm": e_hips.norm,
+                "e_ankles_norm": e_ankles.norm,
+                "j_lelbow_angle": j_lelbow.angle,
+                "j_relbow_angle": j_relbow.angle,
+            }
+        else:
+            return None
+
+    def get_state(self, stats):
+        if stats is not None:
+            if (
+                stats["e_wrists_norm"] <= stats["e_shoulders_norm"]
+                and stats["j_lelbow_angle"] <= 90
+                and stats["j_relbow_angle"] <= 90
+            ):
+                if stats["e_ankles_norm"] <= stats["e_hips_norm"] * 1.5:
+                    return 1
+                elif stats["e_ankles_norm"] >= stats["e_hips_norm"] * 2.0:
+                    return 2
+                else:
+                    return 0
+            elif (
+                stats["e_wrists_norm"] >= stats["e_shoulders_norm"]
+                and stats["e_ankles_norm"] <= stats["e_hips_norm"] * 1.5
+                and stats["j_lelbow_angle"] >= 150
+                and stats["j_relbow_angle"] >= 150
+            ):
+                return 3
+            else:
+                return 0
+        else:
+            return 0
+
+
+WORKOUTS = {
+    "toe_tap": ToeTap,
+    "jumping_jacks": JumpingJacks,
+    "push_up": PushUp,
+    "side_squat_jump": SideSquatJump,
+}
