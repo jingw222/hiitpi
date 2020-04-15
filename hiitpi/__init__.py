@@ -1,6 +1,7 @@
 import sys
 import logging
 import datetime
+import random
 import pandas as pd
 from flask import Response, request, redirect, session
 from flask_migrate import Migrate
@@ -45,6 +46,7 @@ def create_app(config_name):
     from .model import WorkoutSession
     from .pose import PoseEngine
     from .camera import VideoStream
+    from .workout import WORKOUTS
     from .stream import gen
     from .layout import layout_homepage, layout_login, layout
 
@@ -86,10 +88,18 @@ def create_app(config_name):
     app.layout = layout()
 
     @app.callback(
-        Output("videostream", "src"), [Input("workout-dropdown", "value")],
+        [Output("videostream", "src"), Output("workout_name", "children")],
+        [Input("workout-dropdown", "value")],
     )
     def update_dropdown_menu(workout):
-        return f"/videostream/{workout}"
+        if workout is not None:
+            if workout == "random":
+                workout = random.choice(list(WORKOUTS))
+            workout_name = WORKOUTS[workout].name
+        else:
+            workout_name = "Select a workout to get started."
+
+        return f"/videostream/{workout}", workout_name
 
     @app.callback(
         Output("workout-dropdown", "value"),
@@ -100,7 +110,7 @@ def create_app(config_name):
         if workout is not None:
             ws = WorkoutSession(
                 user_name=session.get("user_name"),
-                workout=workout,
+                workout=session.get("workout"),
                 reps=redis_client.get("reps"),
                 pace=redis_client.get("pace"),
             )
@@ -202,9 +212,13 @@ def create_app(config_name):
     @server.route("/videostream/<workout>", methods=["GET"])
     def videiostream(workout):
         user_name = session.get("user_name")
-        session["workout"] = workout
         logger.info(f"Current player: {user_name}")
-        logger.info(f"Current workout: {workout}")
+
+        if workout != "None":
+            workout = WORKOUTS[workout]
+            session["workout"] = workout.name
+            logger.info(f"Current workout: {workout.name}")
+
         return Response(
             gen(camera, workout), mimetype="multipart/x-mixed-replace; boundary=frame"
         )

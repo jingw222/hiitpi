@@ -13,16 +13,16 @@ def layout_config_panel(current_user):
     """The Dash app layout for the user config panel"""
 
     title = html.Div([html.H5(f"Welcome, {current_user}!")], className="app__header")
-
+    dropdown_options = [{"label": "Random", "value": "random"}] + [
+        {"label": v.name, "value": k} for k, v in WORKOUTS.items()
+    ]
     dropdown_menu = html.Div(
         [
             html.Div(
                 [
                     dcc.Dropdown(
                         id="workout-dropdown",
-                        options=[
-                            {"label": v.name, "value": k} for k, v in WORKOUTS.items()
-                        ],
+                        options=dropdown_options,
                         placeholder="Select a workout",
                         searchable=True,
                         clearable=False,
@@ -120,6 +120,8 @@ def layout_config_panel(current_user):
         ],
     )
 
+    workout_name = html.Div([html.P(id="workout_name")], className="app__header",)
+
     def indicator(id_value, text):
         return html.Div(
             [
@@ -164,7 +166,7 @@ def layout_config_panel(current_user):
     )
 
     return html.Div(
-        [title, live_update_graph, dropdown_menu, indicators, bars_graph],
+        [title, live_update_graph, dropdown_menu, workout_name, indicators, bars_graph],
         className="four columns app__config_panel",
     )
 

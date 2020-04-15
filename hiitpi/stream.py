@@ -3,7 +3,6 @@ import logging
 import cv2
 
 from .annotation import Annotator
-from .workout import WORKOUTS
 
 
 logging.basicConfig(
@@ -26,9 +25,8 @@ def gen(camera, workout):
     """
 
     annotator = Annotator()
-
     if workout != "None":
-        workout = WORKOUTS[workout]()
+        workout = workout()
 
     # Gets video frames from the PiCamera
     for output in camera.update():
