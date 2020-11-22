@@ -74,14 +74,14 @@ class VideoStream(object):
     def start(self, model):
         self.stream = StreamOutput(self.camera, model)
         self.camera.start_recording(self.stream, format="rgb")
-        self.camera.wait_recording(2)
+        self.camera.wait_recording(0)
         logger.info("Recording started.")
 
-    def __del__(self):
-        logger.info("Closing PiCamera.")
-        self.stream.close()
+    def close(self):
         self.camera.stop_recording()
+        self.stream.close()
         self.camera.close()
+        logger.info("Recording stopped.")
 
     def update(self):
         while not self.camera.closed:
