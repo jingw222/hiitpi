@@ -1,14 +1,11 @@
-import os
 import redis
 
 
 class RedisClient(object):
     """Sets up a Redis database client for data storage and transmission"""
 
-    def __init__(self, host, port, db, password):
-        self.pool = redis.BlockingConnectionPool(
-            host=host, port=port, db=db, password=password
-        )
+    def __init__(self, host, port, db):
+        self.pool = redis.BlockingConnectionPool(host=host, port=port, db=db)
 
     @property
     def conn(self):
