@@ -3,11 +3,14 @@ pandas
 picamera[array]
 Pillow
 opencv-python
-opencv-contrib-python
 Flask
 Flask-Caching
+Flask-Session
 Flask-Migrate
 Flask-SQLAlchemy
 plotly
 dash
 redis
+psycopg2-binary
+https://dl.google.com/coral/edgetpu_api/edgetpu-2.14.1-py3-none-any.whl
+https://github.com/google-coral/pycoral/releases/download/release-frogfish/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl
