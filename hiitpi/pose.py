@@ -32,7 +32,7 @@ class Keypoint:
         self.score = score
 
     def __repr__(self):
-        return "Keypoint(<{}>, {}, {})".format(self.k, self.yx, self.score)
+        return f"Keypoint(<{self.k}>, {self.yx}, {self.score})"
 
 
 class Pose:
@@ -44,7 +44,7 @@ class Pose:
         self.score = score
 
     def __repr__(self):
-        return "Pose({}, {})".format(self.keypoints, self.score)
+        return f"Pose({self.keypoints}, {self.score})"
 
 
 class PoseEngine(BasicEngine):
@@ -68,7 +68,7 @@ class PoseEngine(BasicEngine):
             raise ValueError(
                 (
                     "Image model should have input shape [1, height, width, 3]!"
-                    " This model has {}.".format(self._input_tensor_shape)
+                    f" This model has {self._input_tensor_shape}."
                 )
             )
         (

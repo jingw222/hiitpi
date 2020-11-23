@@ -57,20 +57,14 @@ class Annotator(object):
         self.draw_pose(draw, output["pose"])
 
         text_lines = [
-            "Inference time: {:.1f}ms ({:.1f}fps)".format(
-                output["inference_time"], 1000 / output["inference_time"]
-            ),
-            "Rendering time: {:.1f}ms ({:.1f}fps)".format(
-                1000 / rendering_fps, rendering_fps
-            ),
+            f'Inference time: {output["inference_time"]:.1f}ms ({1000 / output["inference_time"]:.1f}fps)'
+            f"Rendering time: {1000 / rendering_fps:.1f}ms ({rendering_fps:.1f}fps)",
             "",
         ]
 
         workout = output["workout"]
         if workout.stats is not None:
-            text_lines.extend(
-                ["{}: {:.1f}".format(k, v) for k, v in workout.stats.items()]
-            )
+            text_lines.extend([f"{k}: {v:.1f}" for k, v in workout.stats.items()])
 
         self.draw_text(draw, 10, 10, text="\n".join(text_lines))
 
