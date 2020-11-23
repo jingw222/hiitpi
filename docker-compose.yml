@@ -1,0 +1,54 @@
+version: '3.7'
+
+services:
+    web:
+        build: 
+            context: ./
+            dockerfile: Dockerfile
+        image: hiitpi:latest
+        container_name: "web-hiitpi"
+        restart: unless-stopped
+        privileged: true
+        ports:
+            - "8050:8050"
+        env_file:
+            - ./.env
+        networks:
+            - network-hiitpi
+        volumes:
+            - ./:/hiitpi/
+            - /dev/bus/usb:/dev/bus/usb
+        devices: 
+            - /dev/bus/usb:/dev/bus/usb
+        depends_on:
+            - db
+            - redis
+
+    db:
+        image: postgres:latest
+        container_name: "db-hiitpi"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        restart: unless-stopped
+        expose:
+            - "5432"
+        env_file:
+            - ./.db.env
+        networks:
+            - network-hiitpi
+
+    redis:
+        image: redis:latest
+        container_name: "redis-hiitpi"
+        restart: unless-stopped
+        expose:
+            - "6379"
+        networks:
+            - network-hiitpi
+
+networks:
+  network-hiitpi:
+    driver: bridge
+
+volumes:
+  postgres_data:

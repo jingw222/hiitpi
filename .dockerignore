@@ -13,5 +13,6 @@ __pycache__/
 .python-version
 
 # Misc
+.git
 *.sqlite
 rpi_camera_webstream.py
