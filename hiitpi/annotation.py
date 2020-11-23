@@ -5,8 +5,6 @@ import collections
 import numpy as np
 from PIL import Image, ImageDraw
 
-from . import redis_client
-
 
 logging.basicConfig(
     stream=sys.stdout,

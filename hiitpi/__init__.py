@@ -2,19 +2,16 @@ import sys
 import logging
 import datetime
 import random
+import cv2
 import pandas as pd
 from flask import Response, request, redirect, session
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_caching import Cache
 from flask_session import Session
-import plotly.graph_objects as go
 import plotly.express as px
 import dash
 from dash.dependencies import Input, Output, State
-
-from config import REDIS_CONFIG
-from .redisclient import RedisClient
 
 
 logging.basicConfig(
@@ -33,21 +30,17 @@ cache = Cache()
 db = SQLAlchemy()
 migrate = Migrate()
 
-redis_client = RedisClient(
-    host=REDIS_CONFIG["REDIS_HOST"],
-    port=REDIS_CONFIG["REDIS_PORT"],
-    db=2,
-    password=REDIS_CONFIG["REDIS_PASSWORD"],
-)
-
 
 def create_app(config_name):
-    from config import config
+    """Create a Dash app."""
+
+    from .config import config
     from .model import WorkoutSession
     from .pose import PoseEngine
-    from .camera import VideoStream
+    from .camera import StreamOutput, VideoStream
+    from .redisclient import RedisClient
     from .workout import WORKOUTS
-    from .stream import gen
+    from .annotation import Annotator
     from .layout import layout_homepage, layout_login, layout
 
     app = dash.Dash(
@@ -56,7 +49,7 @@ def create_app(config_name):
             {"name": "charset", "content": "UTF-8"},
             {
                 "name": "viewport",
-                "content": "width=device-width, initial-scale=1, shrink-to-fit=no",
+                "content": "width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no",
             },
             {"name": "author", "content": "James Wong"},
             {
@@ -67,13 +60,13 @@ def create_app(config_name):
     )
     app.title = "HIIT PI"
     app.config.suppress_callback_exceptions = True
+    app.layout = layout()
 
     server = app.server
     server.config.from_object(config[config_name])
 
     with server.app_context():
         db.init_app(server)
-        db.create_all()
         migrate.init_app(server, db)
 
         sess.init_app(server)
@@ -81,24 +74,68 @@ def create_app(config_name):
         cache.init_app(server)
         cache.clear()
 
+    video = VideoStream()
     model = PoseEngine(model_path=server.config["MODEL_PATH"])
-    camera = VideoStream()
-    camera.start(model=model)
+    redis = RedisClient(
+        host=server.config["REDIS_HOST"],
+        port=server.config["REDIS_PORT"],
+        db=server.config["REDIS_DB"],
+    )
 
-    app.layout = layout()
+    def gen(video, workout):
+        """Streams and analyzes video contents while overlaying stats info
+        Args:
+        video: a VideoStream object.
+        workout: str, a workout name or "None".  
+        Returns:
+        bytes, the output image data
+        """
+        if workout != "None":
+            # Initiates the Workout object from the workout name
+            workout = WORKOUTS[workout]()
+            workout.setup(redis=redis)
+            annotator = Annotator()
+
+            for output in video.update():
+                # Computes pose stats
+                workout.update(output["pose"])
+                output["workout"] = workout
+
+                # Annotates the image and encodes the raw RGB data into JPEG format
+                output["array"] = annotator.annotate(output)
+                img = cv2.cvtColor(output["array"], cv2.COLOR_RGB2BGR)
+                _, buf = cv2.imencode(".jpeg", img)
+                yield (
+                    b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
+                    + buf.tobytes()
+                    + b"\r\n\r\n"
+                )
+        else:
+            # Renders a blurring effect while on standby with no workout
+            for output in video.update():
+                img = cv2.blur(output["array"], (32, 32))
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+                ret, buf = cv2.imencode(".jpeg", img)
+                yield (
+                    b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
+                    + buf.tobytes()
+                    + b"\r\n\r\n"
+                )
 
     @app.callback(
         [Output("videostream", "src"), Output("workout_name", "children")],
         [Input("workout-dropdown", "value")],
     )
-    def update_dropdown_menu(workout):
+    def start_workout(workout):
         if workout is not None:
             if workout == "random":
                 workout = random.choice(list(WORKOUTS))
             workout_name = WORKOUTS[workout].name
+            session["workout"] = workout_name
         else:
             workout_name = "Select a workout to get started."
-
+            session["workout"] = None
+        logger.info(f'Current workout: {session.get("workout")}')
         return f"/videostream/{workout}", workout_name
 
     @app.callback(
@@ -111,8 +148,8 @@ def create_app(config_name):
             ws = WorkoutSession(
                 user_name=session.get("user_name"),
                 workout=session.get("workout"),
-                reps=redis_client.get("reps"),
-                pace=redis_client.get("pace"),
+                reps=redis.get("reps"),
+                pace=redis.get("pace"),
             )
             db.session.add(ws)
             db.session.commit()
@@ -129,17 +166,14 @@ def create_app(config_name):
             current_time = datetime.datetime.utcnow()
             a_week_ago = current_time - datetime.timedelta(weeks=1)
 
-            query = db.session.query(
-                WorkoutSession.user_name,
-                WorkoutSession.workout,
-                db.func.sum(WorkoutSession.reps).label("reps"),
-            ).filter(WorkoutSession.created_date >= a_week_ago)
-
-            if workout is not None:
-                query = query.filter_by(workout=workout)
-
             query = (
-                query.group_by(WorkoutSession.user_name, WorkoutSession.workout)
+                db.session.query(
+                    WorkoutSession.user_name,
+                    WorkoutSession.workout,
+                    db.func.sum(WorkoutSession.reps).label("reps"),
+                )
+                .filter(WorkoutSession.created_date >= a_week_ago)
+                .group_by(WorkoutSession.user_name, WorkoutSession.workout)
                 .order_by(db.func.sum(WorkoutSession.reps).desc())
                 .all()
             )
@@ -149,7 +183,7 @@ def create_app(config_name):
                 "barmode": "stack",
                 "margin": {"l": 0, "r": 0, "b": 0, "t": 40},
                 "autosize": True,
-                "font": {"family": "Comfortaa", "color": COLORS["text"], "size": 10,},
+                "font": {"family": "Comfortaa", "color": COLORS["text"], "size": 10},
                 "plot_bgcolor": COLORS["graph_bg"],
                 "paper_bgcolor": COLORS["graph_bg"],
                 "xaxis": {
@@ -175,7 +209,17 @@ def create_app(config_name):
                     "xanchor": "center",
                     "yanchor": "top",
                 },
-                "showlegend": False,
+                "legend": {
+                    "x": 1.0,
+                    "y": -0.2,
+                    "xanchor": "right",
+                    "yanchor": "top",
+                    "title": "",
+                    "orientation": "h",
+                    "itemclick": "toggle",
+                    "itemdoubleclick": "toggleothers",
+                },
+                "showlegend": True,
             }
             fig = px.bar(
                 df,
@@ -213,14 +257,8 @@ def create_app(config_name):
     def videiostream(workout):
         user_name = session.get("user_name")
         logger.info(f"Current player: {user_name}")
-
-        if workout != "None":
-            workout = WORKOUTS[workout]
-            session["workout"] = workout.name
-            logger.info(f"Current workout: {workout.name}")
-
         return Response(
-            gen(camera, workout), mimetype="multipart/x-mixed-replace; boundary=frame"
+            gen(video, workout), mimetype="multipart/x-mixed-replace; boundary=frame"
         )
 
     @app.callback(
@@ -231,13 +269,13 @@ def create_app(config_name):
         ],
         [Input("live-update-interval", "n_intervals")],
     )
-    def update_graph(n_intervals):
-        inference_time = redis_client.lpop("inference_time")
-        pose_score = redis_client.lpop("pose_score")
+    def update_workout_graph(n_intervals):
+        inference_time = redis.lpop("inference_time")
+        pose_score = redis.lpop("pose_score")
         data = [{"y": [[inference_time], [pose_score]]}, [0, 1], 200]
 
-        reps = redis_client.get("reps")
-        pace = redis_client.get("pace")
+        reps = redis.get("reps")
+        pace = redis.get("pace")
 
         return data, f"{reps:.0f}", f"{pace*30:.1f}" if pace > 0 else "/"
 
@@ -245,9 +283,12 @@ def create_app(config_name):
     def user_login():
         user_name = request.form.get("user_name_form")
         session["user_name"] = user_name
-        logger.info(f"User {user_name} logged in")
-        redis_client.set("reps", 0)
-        redis_client.set("pace", 0)
+        logger.info(f"Player {user_name} logged in")
+
+        if video.closed is None or video.closed:
+            video.setup(model=model, redis=redis)
+            video.start()
+
         return redirect("/home")
 
     @server.route("/user_logout")
@@ -255,16 +296,18 @@ def create_app(config_name):
         user_name = session.pop("user_name")
         if user_name is not None:
             session.clear()
-        logger.info(f"User {user_name} logged out")
-        return redirect("/login")
+        logger.info(f"Player {user_name} logged out")
+
+        if not video.closed:
+            video.close()
+
+        return redirect("/")
 
     @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
     def display_page(pathname):
         if pathname == "/home":
             current_user = session.get("user_name")
             return layout_homepage(current_user)
-        elif pathname == "/login":
-            return layout_login()
         else:
             return layout_login()
 

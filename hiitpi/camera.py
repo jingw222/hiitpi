@@ -3,8 +3,6 @@ import logging
 import picamera
 import picamera.array
 
-from . import redis_client
-
 
 WIDTH, HEIGHT = 640, 480
 FRAMERATE = 24
@@ -23,13 +21,21 @@ logger = logging.getLogger(__name__)
 
 
 class StreamOutput(picamera.array.PiRGBAnalysis):
-    def __init__(self, camera, model):
-        """Custom streaming output for the PiCamera"""
-        super().__init__(camera)
-        self.model = model
+    """Custom streaming output for the PiCamera"""
+
+    def setup(self, model, redis):
+        """
+        Args:
+          model: PoseEngine for TensorFlow Lite models.
+          redis: RedisClient.
+        """
         self.array = None
         self.pose = None
         self.inference_time = None
+        self.model = model
+        self.redis = redis
+        self.redis.set("reps", 0)
+        self.redis.set("pace", 0)
 
     def analyze(self, array):
         """While recording is in progress, analyzes incoming array data"""
@@ -37,8 +43,8 @@ class StreamOutput(picamera.array.PiRGBAnalysis):
         self.pose, self.inference_time = self.model.DetectPosesInImage(self.array)
         if self.pose:
             self.pose = max(self.pose, key=lambda pose: pose.score)
-            redis_client.lpush("pose_score", self.pose.score.item(), max_size=5)
-        redis_client.lpush("inference_time", self.inference_time, max_size=5)
+            self.redis.lpush("pose_score", self.pose.score.item(), max_size=5)
+        self.redis.lpush("inference_time", self.inference_time, max_size=5)
 
 
 class VideoStream(object):
@@ -58,33 +64,58 @@ class VideoStream(object):
           zoom: the zoom applied to the camera’s input.
           ev: the exposure compensation level of the camera.
         """
-        # Initiates a PiCamera instance
-        self.camera = picamera.PiCamera()
-        self.camera.resolution = resolution
-        self.camera.framerate = framerate
-        self.camera.hflip = hflip
-        self.camera.zoom = zoom
-        self.camera.exposure_compensation = ev
+        # PiCamera configurations
+        self.resolution = resolution
+        self.framerate = framerate
+        self.hflip = hflip
+        self.zoom = zoom
+        self.ev = ev
         logger.info(
-            "PiCamera: resolution={} framerate={}".format(
-                self.camera.resolution, self.camera.framerate
-            )
+            f"PiCamera configurations: "
+            f"resolution={self.resolution}, framerate={self.framerate}, "
+            f"hflip={self.hflip}, zoom={self.zoom}, ev={self.ev}"
         )
+        self.closed = None
 
-    def start(self, model):
-        self.stream = StreamOutput(self.camera, model)
+    def setup(self, model, redis):
+        """Initiates a PiCamera, attaches a StreamOutput and starts recording.
+        Args:
+          model: PoseEngine for TensorFlow Lite models.
+          redis: RedisClient.
+        """
+
+        # Builds and sets up a PiCamera
+        self.camera = picamera.PiCamera()
+        self.camera.resolution = self.resolution
+        self.camera.framerate = self.framerate
+        self.camera.hflip = self.hflip
+        self.camera.zoom = self.zoom
+        self.camera.exposure_compensation = self.ev
+
+        # Creates and sets up a StreamOutput
+        self.stream = StreamOutput(self.camera)
+        self.stream.setup(model=model, redis=redis)
+
+        self.closed = False
+
+    def start(self):
+        """Starts recording to the stream."""
         self.camera.start_recording(self.stream, format="rgb")
-        self.camera.wait_recording(0)
+        self.camera.wait_recording(2)
         logger.info("Recording started.")
 
     def close(self):
+        """Closes the camera and the stream."""
         self.camera.stop_recording()
-        self.stream.close()
         self.camera.close()
+        self.stream.close()
         logger.info("Recording stopped.")
 
+        self.closed = True
+
     def update(self):
-        while not self.camera.closed:
+        """Streams outputs from the camera."""
+        while not self.closed:
             yield {
                 "array": self.stream.array,
                 "pose": self.stream.pose,

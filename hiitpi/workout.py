@@ -5,8 +5,6 @@ import itertools
 import collections
 import numpy as np
 
-from . import redis_client
-
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -30,7 +28,7 @@ class Edge:
         self.score = min(self.k_a.score, self.k_b.score)
 
     def __repr__(self):
-        return "Edge({} -> {}, {})".format(self.k_a.k, self.k_b.k, self.vec)
+        return f"Edge({self.k_a.k} -> {self.k_b.k}, {self.vec})"
 
     def __invert__(self):
         return Edge(self.k_b, self.k_a)
@@ -51,7 +49,7 @@ class Joint:
         self.angle = self.e_a.find_angle(self.e_b)
 
     def __repr__(self):
-        return "Joint({}, {}, {})".format(self.e_a, self.e_b, self.angle)
+        return f"Joint({self.e_a}, {self.e_b}, {self.angle})"
 
 
 class Workout:
@@ -69,8 +67,15 @@ class Workout:
         self._init_time = time.perf_counter()
         self._reps_time = collections.deque([], maxlen=32)
 
-        redis_client.set("reps", self.reps)
-        redis_client.set("pace", self.pace)
+    def setup(self, redis):
+        """
+        Args:
+          redis: RedisClient.
+        """
+        self.redis = redis
+
+        self.redis.set("reps", self.reps)
+        self.redis.set("pace", self.pace)
 
     def get_stats(self, pose):
         raise NotImplemented
@@ -93,8 +98,8 @@ class Workout:
                             self._reps_time[-1] - self._reps_time[0]
                         )
                     self.reps += 1
-                    redis_client.set("reps", self.reps)
-                    redis_client.set("pace", self.pace)
+                    self.redis.set("reps", self.reps)
+                    self.redis.set("pace", self.pace)
 
 
 class ToeTap(Workout):
