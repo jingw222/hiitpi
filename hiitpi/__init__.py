@@ -37,7 +37,7 @@ def create_app(config_name):
     from .config import config
     from .model import WorkoutSession
     from .pose import PoseEngine
-    from .camera import StreamOutput, VideoStream
+    from .camera import VideoStream
     from .redisclient import RedisClient
     from .workout import WORKOUTS
     from .annotation import Annotator

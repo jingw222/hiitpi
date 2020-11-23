@@ -12,7 +12,8 @@ COLORS = {"graph_bg": "#1E1E1E", "text": "#696969"}
 def layout_config_panel(current_user):
     """The Dash app layout for the user config panel"""
 
-    title = html.Div([html.H5(f"Welcome, {current_user}!")], className="app__header")
+    title = html.Div([html.H5(f"HIIT PI")], className="app__header")
+    subtitle = html.Div([html.P(f"Welcome, {current_user}!")], className="app__header")
     dropdown_options = [{"label": "Random", "value": "random"}] + [
         {"label": v.name, "value": k} for k, v in WORKOUTS.items()
     ]
@@ -92,7 +93,7 @@ def layout_config_panel(current_user):
                         },
                         "yaxis": {
                             # "autorange": True,
-                            "range": [18, 30],
+                            "range": [10, 30],
                             "title": "Inference Time (ms)",
                         },
                         "yaxis2": {
@@ -116,11 +117,11 @@ def layout_config_panel(current_user):
                     "responsive": True,
                     "scrollZoom": True,
                 },
-            ),
-        ],
+            )
+        ]
     )
 
-    workout_name = html.Div([html.P(id="workout_name")], className="app__header",)
+    workout_name = html.Div([html.P(id="workout_name")], className="app__header")
 
     def indicator(id_value, text):
         return html.Div(
@@ -166,7 +167,15 @@ def layout_config_panel(current_user):
     )
 
     return html.Div(
-        [title, live_update_graph, dropdown_menu, workout_name, indicators, bars_graph],
+        [
+            title,
+            subtitle,
+            live_update_graph,
+            dropdown_menu,
+            workout_name,
+            indicators,
+            bars_graph,
+        ],
         className="four columns app__config_panel",
     )
 
@@ -246,6 +255,5 @@ def layout_login():
 
 
 def layout():
-    return html.Div(
-        [dcc.Location(id="url", refresh=True), html.Div(id="page-content"),]
-    )
+    return html.Div([dcc.Location(id="url", refresh=True), html.Div(id="page-content")])
+
