@@ -10,20 +10,17 @@ ENV LC_ALL=C.UTF-8 \
 
 # Install dependencies
 RUN apt-get update && \
-  apt-get install --no-install-recommends -y build-essential cmake pkg-config apt-utils && \
-  apt-get install --no-install-recommends -y libjpeg-dev libtiff5-dev libjasper-dev libpng-dev libilmbase23 libopenexr-dev libgtk-3-dev && \
-  apt-get install --no-install-recommends -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev && \
-  apt-get install --no-install-recommends -y libxvidcore-dev libx264-dev && \
-  apt-get install --no-install-recommends -y gnupg2 apt-transport-https curl libatlas-base-dev gfortran python3-dev libpq-dev
+  apt-get install -y build-essential cmake pkg-config apt-utils && \
+  apt-get install -y libjpeg-dev libtiff5-dev libjasper-dev libpng-dev libilmbase23 libopenexr-dev libgtk-3-dev && \
+  apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev && \
+  apt-get install -y libxvidcore-dev libx264-dev && \
+  apt-get install -y gnupg2 apt-transport-https curl libatlas-base-dev gfortran python3-dev libpq-dev
 
 # Add Coral Edge TPU package repository 
 RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list && \
   curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add
 
 # Install the Edge TPU runtime
-# Note:
-# If you need maximum performance, install `libedgetpu1-legacy-max` instead. 
-# Check out the documentation for more. 
 RUN apt-get update && apt-get install -y libedgetpu1-legacy-std
 
 # Add pip package index urls
@@ -39,7 +36,6 @@ COPY app.py boot.sh requirements.txt ./
 
 RUN pip install --upgrade pip && \
   pip install --upgrade setuptools wheel && \
-  pip install pysocks && \
   pip install -r requirements.txt
 
 RUN chmod +x boot.sh 
